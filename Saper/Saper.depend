@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1635700091 source:d:\codeblocks\saper\main.c
+	<windows.h>
+	<gl/gl.h>
+

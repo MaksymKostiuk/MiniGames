@@ -21,6 +21,11 @@ int mines;
 int closedCell;
 
 
+BOOL IsCellInMap(int x, int y)
+{
+    return (x >= 0) && (y >= 0) && (x < mapW) && (y < mapH);
+}
+
 void Game_New()
 {
     srand(time(NULL));
@@ -33,10 +38,40 @@ void Game_New()
         int x = rand() % mapW;
         int y = rand() % mapH;
         if (map[x][y].mine) i--;
-        else map[x][y].mine = TRUE;
+        else
+        {
+            map[x][y].mine = TRUE;
+
+            for (int dx = -1; dx < 2; dx++)
+                for (int dy = -1; dy < 2; dy++)
+                if (IsCellInMap(x+dx, y+dy))
+                    map[x+dx][y+dy].cntAround += 1;
+        }
     }
 }
 
+
+void ShowCount(int a)
+{
+    void Line(float x1, float y1, float x2, float y2)
+    {
+        glVertex2f(x1,y1);
+        glVertex2f(x2,y2);
+    }
+    glLineWidth(3);
+    glColor3f(1,1,0);
+    glBegin(GL_LINES);
+        if ((a != 1) && (a != 4)) Line(0.3, 0.85, 0.7,0.85);
+        if ((a != 0) && (a != 1) && (a != 7)) Line(0.3, 0.5, 0.7,0.5);
+        if ((a != 1) && (a != 4) && (a != 7)) Line(0.3, 0.15, 0.7,0.15);
+
+        if ((a != 5) && (a != 6)) Line(0.7, 0.5, 0.7,0.85);
+        if ((a != 2)) Line(0.7, 0.5, 0.7,0.15);
+
+        if ((a != 1) && (a != 2) && (a != 3) && (a != 7)) Line(0.3, 0.5, 0.3,0.85);
+        if ((a == 0) || (a == 2) || (a == 6) || (a == 8)) Line(0.3, 0.5, 0.3,0.15);
+    glEnd();
+}
 
 void ShowMine()
 {
@@ -72,6 +107,8 @@ void Game_Show()
         ShowField();
         if (map[i][j].mine)
             ShowMine();
+        else if (map[i][j].cntAround > 0)
+            ShowCount(map[i][j].cntAround);
         glPopMatrix();
     }
 
