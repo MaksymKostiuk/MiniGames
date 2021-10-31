@@ -61,8 +61,20 @@ void ShowField()
 void Game_Show()
 {
     glLoadIdentity();
-    ShowField();
-    ShowMine();
+    glScalef(2.0/mapW, 2.0/mapH, 1);
+    glTranslatef(-mapW*0.5, -mapH*0.5, 0);
+
+    for (int j=0; j < mapH; j++)
+        for (int i = 0; i < mapW; i++)
+    {
+        glPushMatrix();
+        glTranslatef(i, j, 0);
+        ShowField();
+        if (map[i][j].mine)
+            ShowMine();
+        glPopMatrix();
+    }
+
 }
 
 int WINAPI WinMain(HINSTANCE hInstance,
