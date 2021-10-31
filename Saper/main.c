@@ -5,8 +5,8 @@ LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
 void DisableOpenGL(HWND, HDC, HGLRC);
 
-#define mapW 10
-#define mapH 10
+#define mapW 20
+#define mapH 20
 
 typedef struct {
     BOOL mine;
@@ -19,6 +19,7 @@ typedef struct {
 TCell map[mapW][mapH];
 int mines;
 int closedCell;
+BOOL failed;
 
 
 BOOL IsCellInMap(int x, int y)
@@ -26,13 +27,22 @@ BOOL IsCellInMap(int x, int y)
     return (x >= 0) && (y >= 0) && (x < mapW) && (y < mapH);
 }
 
+void ScreeToOpenGL(HWND hwnd, int x, int y, float *ox, float *oy)
+{
+    RECT rct;
+    GetClientRect(hwnd, &rct);
+    *ox = x / (float)rct.right * mapW;
+    *oy = mapH - y / (float)rct.bottom * mapH;
+}
+
 void Game_New()
 {
     srand(time(NULL));
     memset(map, 0, sizeof(map));
 
-    mines = 20;
+    mines = 40;
     closedCell = mapW * mapH;
+    failed = FALSE;
     for (int i=0; i < mines; i++)
     {
         int x = rand() % mapW;
@@ -93,6 +103,49 @@ void ShowField()
     glEnd();
 }
 
+void ShowFieldOpen()
+{
+    glBegin(GL_TRIANGLE_STRIP);
+       glColor3f(0.3, 0.7, 0.3); glVertex2f(0,1);
+       glColor3f(0.3, 0.6, 0.3); glVertex2f(1,1); glVertex2f(0,0);
+       glColor3f(0.3, 0.5, 0.3); glVertex2f(1,0);
+    glEnd();
+}
+
+void ShowFlag()
+{
+    glBegin(GL_TRIANGLES);
+        glColor3f(1,0,0);
+        glVertex2f(0.25, 0.75);
+        glVertex2f(0.85, 0.5);
+        glVertex2f(0.25, 0.25);
+    glEnd();
+    glLineWidth(5);
+    glBegin(GL_LINES);
+        glColor3f(0,0,0);
+        glVertex2f(0.25, 0.75);
+        glVertex2f(0.25, 0);
+    glEnd();
+}
+
+void OpenFields(int x, int y)
+{
+    if (!IsCellInMap(x,y) || map[x][y].open) return;
+    map[x][y].open = TRUE;
+    closedCell--;
+    if (map[x][y].cntAround == 0)
+        for(int dx = -1; dx < 2; dx++)
+        for (int dy = -1; dy < 2; dy++)
+            OpenFields(x+dx, y+dy);
+    if (map[x][y].mine)
+    {
+        failed = TRUE;
+        for (int j=0; j < mapH; j++)
+            for(int i = 0; i < mapW; i++)
+               map[i][j].open = TRUE;
+    }
+}
+
 void Game_Show()
 {
     glLoadIdentity();
@@ -104,14 +157,23 @@ void Game_Show()
     {
         glPushMatrix();
         glTranslatef(i, j, 0);
-        ShowField();
+
+        if (map[i][j].open)
+        {
+            ShowFieldOpen();
         if (map[i][j].mine)
             ShowMine();
         else if (map[i][j].cntAround > 0)
             ShowCount(map[i][j].cntAround);
+        }
+        else
+        {
+            ShowField();
+            if (map[i][j].flag) ShowFlag();
+
+        }
         glPopMatrix();
     }
-
 }
 
 int WINAPI WinMain(HINSTANCE hInstance,
@@ -190,6 +252,9 @@ int WINAPI WinMain(HINSTANCE hInstance,
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
+            if (mines == closedCell)
+                Game_New();
+
             Game_Show();
 
             SwapBuffers(hDC);
@@ -213,6 +278,33 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         case WM_CLOSE:
             PostQuitMessage(0);
+        break;
+
+        case WM_LBUTTONDOWN:
+        {
+            if (failed)
+                Game_New();
+            else
+            {
+            POINTFLOAT pf;
+            ScreeToOpenGL(hwnd, LOWORD(lParam), HIWORD(lParam), &pf.x, &pf.y);
+            int x = (int)pf.x;
+            int y = (int)pf.y;
+            if (IsCellInMap(x, y) && !map[x][y].flag)
+                OpenFields(x,y);
+            }
+        }
+        break;
+
+        case WM_RBUTTONDOWN:
+        {
+            POINTFLOAT pf;
+            ScreeToOpenGL(hwnd, LOWORD(lParam), HIWORD(lParam), &pf.x, &pf.y);
+            int x = (int)pf.x;
+            int y = (int)pf.y;
+            if (IsCellInMap(x, y))
+                map[x][y].flag = !map[x][y].flag;
+        }
         break;
 
         case WM_DESTROY:
