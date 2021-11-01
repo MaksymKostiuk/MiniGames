@@ -1,9 +1,12 @@
 #include <windows.h>
 #include <gl/gl.h>
+#include <math.h>
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
 void DisableOpenGL(HWND, HDC, HGLRC);
+
+float light;
 
 void Quad(float x, float y, float dx, float dy)
 {
@@ -21,16 +24,16 @@ void DrawHouse(float x, float y, float size)
     glTranslatef(x, y, 0);
     glScalef(size,size,1);
 
-    glColor3f(1,0,0);
-            Quad(-0.5, -0.5, 1, 0.5); // Main part of house
-            Quad(0.2, 0, 0.2, 0.5); // Chimney
-            glColor3f(1,1,1);
-            Quad(-0.1, -0.3, 0.2, 0.2); // Window
-            glBegin(GL_TRIANGLES); // Rooftop
-                glVertex2f(-0.6, 0);
-                glVertex2f(0.6,0);
-                glVertex2f(0, 0.5);
-            glEnd();
+    glColor3f(light,0,0);
+    Quad(-0.5, -0.5, 1, 0.5); // Main part of house
+    Quad(0.2, 0, 0.2, 0.5); // Chimney
+    glColor3f(light,light,light);
+    Quad(-0.1, -0.3, 0.2, 0.2); // Window
+    glBegin(GL_TRIANGLES); // Rooftop
+            glVertex2f(-0.6, 0);
+            glVertex2f(0.6,0);
+            glVertex2f(0, 0.5);
+    glEnd();
 
     glPopMatrix();
 }
@@ -110,6 +113,13 @@ int WINAPI WinMain(HINSTANCE hInstance,
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
+            //Draw grass...
+            glColor3f(0.6 * light, 0.8 * light, light);
+            Quad(-2, 0.15, 4, 1);
+            //...and sky
+            glColor3f(0.4*light, 0.7 * light, 0.2*light);
+            Quad(-2, 0.15, 4, -2);
+
             DrawHouse(-0.5, -0.5, 0.4);
             DrawHouse(0.5, -0.3, 0.3);
             DrawHouse(-0.1, 0, 0.2);
@@ -123,6 +133,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
                 glColor3f(1, 1, 0);
                 Quad(0, 0, 0.2, 0.2);
             glPopMatrix();
+
+            light = sin(alfa / 180 * M_PI) * 0.45 + 0.5;
 
             SwapBuffers(hDC);
 
