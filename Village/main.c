@@ -15,6 +15,26 @@ void Quad(float x, float y, float dx, float dy)
     glEnd();
 }
 
+void DrawHouse(float x, float y, float size)
+{
+    glPushMatrix();
+    glTranslatef(x, y, 0);
+    glScalef(size,size,1);
+
+    glColor3f(1,0,0);
+            Quad(-0.5, -0.5, 1, 0.5); // Main part of house
+            Quad(0.2, 0, 0.2, 0.5); // Chimney
+            glColor3f(1,1,1);
+            Quad(-0.1, -0.3, 0.2, 0.2); // Window
+            glBegin(GL_TRIANGLES); // Rooftop
+                glVertex2f(-0.6, 0);
+                glVertex2f(0.6,0);
+                glVertex2f(0, 0.5);
+            glEnd();
+
+    glPopMatrix();
+}
+
 
 int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrevInstance,
@@ -90,23 +110,23 @@ int WINAPI WinMain(HINSTANCE hInstance,
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
+            DrawHouse(-0.5, -0.5, 0.4);
+            DrawHouse(0.5, -0.3, 0.3);
+            DrawHouse(-0.1, 0, 0.2);
+
+            static float alfa = 0;
+            alfa -= 2;
             glPushMatrix();
-            glRotatef(theta, 0.0f, 0.0f, 1.0f);
-
-            glBegin(GL_TRIANGLES);
-
-                glColor3f(1.0f, 0.0f, 0.0f);   glVertex2f(0.0f,   1.0f);
-                glColor3f(0.0f, 1.0f, 0.0f);   glVertex2f(0.87f,  -0.5f);
-                glColor3f(0.0f, 0.0f, 1.0f);   glVertex2f(-0.87f, -0.5f);
-
-            glEnd();
-
+                glTranslatef(0, -1, 0);
+                glRotatef(alfa, 0, 0, 1);
+                glTranslatef(1.7, 0, 0);
+                glColor3f(1, 1, 0);
+                Quad(0, 0, 0.2, 0.2);
             glPopMatrix();
 
             SwapBuffers(hDC);
 
-            theta += 1.0f;
-            Sleep (1);
+            Sleep (15);
         }
     }
 
